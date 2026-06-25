@@ -21,8 +21,6 @@
 <div id="payment-result"></div>
 
 <script>
-
-// ✅ функция теперь точно существует
 async function start() {
   try {
     const sessionJWT = document.getElementById("jwtInput").value.trim();
@@ -32,7 +30,6 @@ async function start() {
       return;
     }
 
-    // очистка UI
     document.getElementById("payment-button").innerHTML = "";
     document.getElementById("payment-result").innerHTML = "";
 
@@ -43,27 +40,22 @@ async function start() {
 
     console.log("RAW JWT:", result);
 
-    // ✅ ВАЖНО: объявляем payload ТОЛЬКО 1 раз
     const payload = JSON.parse(atob(result.split('.')[1]));
 
     console.log("DECODED:", payload);
 
-    // ✅ вывод на страницу
     const resultDiv = document.getElementById("payment-result");
 
     if (payload.status === "AUTHORIZED") {
       resultDiv.innerHTML = `
         <h3 style="color:green;">✅ Платёж прошёл</h3>
-        <b>ID:</b> ${payload.id}<br>
-        <b>Сумма:</b> ${payload.details.orderInformation.amountDetails.totalAmount}<br>
-        <b>Валюта:</b> ${payload.details.orderInformation.amountDetails.currency}
+        ID: ${payload.id}
       `;
     } else {
       resultDiv.innerHTML = `
         <h3 style="color:red;">❌ Ошибка</h3>
-        <b>Status:</b> ${payload.status}<br>
-        <b>Reason:</b> ${payload.details?.reason || 'Unknown'}<br>
-        <b>Message:</b> ${payload.message}
+        Status: ${payload.status}<br>
+        Reason: ${payload.details?.reason || 'Unknown'}
       `;
     }
 
@@ -71,7 +63,6 @@ async function start() {
     console.error("ERROR:", e);
   }
 }
-
 </script>
 
 </body>
