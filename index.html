@@ -42,7 +42,39 @@ async function start() {
 
     const result = await checkout.mount('#payment-button');
 
-    console.log("PAYMENT RESULT:", result);
+    console.log("RAW JWT:", result);
+
+// ✅ декодируем payload
+const payload = JSON.parse(atob(result.split('.')[1]));
+
+console.log("DECODED:", payload);
+
+// ✅ вывод на страницу
+let resultDiv = document.getElementById("payment-result");
+
+if (!resultDiv) {
+  resultDiv = document.createElement("div");
+  resultDiv.id = "payment-result";
+  resultDiv.style.marginTop = "20px";
+  document.body.appendChild(resultDiv);
+}
+
+// ✅ форматируем красиво
+if (payload.status === "AUTHORIZED") {
+  resultDiv.innerHTML = `
+    <h3 style="color:green;">✅ Платёж прошёл</h3>
+    <b>ID:</b> ${payload.id}<br>
+    <b>Сумма:</b> ${payload.details.orderInformation.amountDetails.totalAmount}<br>
+    <b>Валюта:</b> ${payload.details.orderInformation.amountDetails.currency}
+  `;
+} else {
+  resultDiv.innerHTML = `
+    <h3 style="color:red;">❌ Ошибка</h3>
+    <b>Status:</b> ${payload.status}<br>
+    <b>Reason:</b> ${payload.details.reason || payload.message}<br>
+    <b>Message:</b> ${payload.message}
+  `;
+}
 
     // (опционально) сразу декодировать
     const payload = JSON.parse(atob(result.split('.')[1]));
