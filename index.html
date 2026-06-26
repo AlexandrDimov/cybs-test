@@ -1,17 +1,15 @@
 <!DOCTYPE html>
-<html lang="ru">
-<head>
+<html<head><html lang="ru">
   <meta charset="UTF-8" />
   <title>UC Auto Processing</title>
 
-  <!-- SDK -->
   <script src="https://apitest.cybersource.com/uc/v1/assets/1.0.0/UnifiedCheckout.js"></script>
 </head>
 <body>
 
 <h2>Оплата (Unified Checkout)</h2>
 
-<!-- ✅ поле для JWT -->
+<!-- JWT -->
 <div>
   <textarea 
     id="jwt-input" 
@@ -22,20 +20,23 @@
 
 <br>
 
-<!-- ✅ кнопки -->
 <button onclick="initPayment()">Init Payment</button>
 <button onclick="clearAll()">Очистить</button>
 
 <hr>
 
-<!-- сюда рендерится checkout -->
 <div id="payment-container"></div>
+
+<hr>
+
+<!-- ✅ результат -->
+<h3>Ответ платежа</h3>
+<pre id="result-container" style="background:#f5f5f5; padding:15px; width:800px; overflow:auto;"></pre>
 
 <script>
 
 async function initPayment() {
   try {
-    // ✅ берем JWT из поля
     const sessionJWT = document.getElementById('jwt-input').value.trim();
 
     if (!sessionJWT) {
@@ -43,18 +44,32 @@ async function initPayment() {
       return;
     }
 
-    // очищаем контейнер перед новым запуском
     document.getElementById('payment-container').innerHTML = "";
+    document.getElementById('result-container').textContent = "";
 
-    // ✅ создаём клиент
     const client = await VAS.UnifiedCheckout(sessionJWT);
 
-    // ✅ autoProcessing как у тебя
     const checkout = await client.createCheckout({
       autoProcessing: true
     });
 
-    // ✅ mount
+    // ✅ ЛОВИМ РЕЗУЛЬТАТ
+    checkout.on('paymentComplete', (data) => {
+      console.log("Payment result:", data);
+
+      // красивый вывод JSON
+      document.getElementById('result-container').textContent =
+        JSON.stringify(data, null, 2);
+    });
+
+    // ✅ ЛОВИМ ОШИБКИ
+    checkout.on('error', (err) => {
+      console.error("Payment error:", err);
+
+      document.getElementById('result-container').textContent =
+        "ERROR:\n" + JSON.stringify(err, null, 2);
+    });
+
     await checkout.mount('#payment-container');
 
     console.log("Checkout initialized");
@@ -66,12 +81,9 @@ async function initPayment() {
 }
 
 function clearAll() {
-  // очищаем JWT
   document.getElementById('jwt-input').value = "";
-  
-  // очищаем UI
   document.getElementById('payment-container').innerHTML = "";
-
+  document.getElementById('result-container').textContent = "";
   console.log("Cleared");
 }
 
@@ -79,3 +91,4 @@ function clearAll() {
 
 </body>
 </html>
+
