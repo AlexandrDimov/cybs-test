@@ -2,40 +2,87 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>UC Auto Processing</title>
+  <title>UC Centered Checkout</title>
 
   <!-- SDK -->
   <script src="https://apitest.cybersource.com/uc/v1/assets/1.0.0/UnifiedCheckout.js"></script>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #f5f5f5;
+      text-align: center;
+    }
+
+    .wrapper {
+      max-width: 700px;
+      margin: 0 auto;
+      margin-top: 40px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 150px;
+    }
+
+    button {
+      margin: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    /* ✅ Центровка checkout */
+    #payment-selection,
+    #payment-screen {
+      width: 400px;
+      margin: 20px auto;
+    }
+
+    /* просто визуал */
+    #payment-screen {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+  </style>
 </head>
+
 <body>
 
-<h2>Оплата (Unified Checkout)</h2>
+<div class="wrapper">
 
-<!-- ✅ поле для JWT -->
-<div>
+  <h2>Оплата (Unified Checkout)</h2>
+
+  <!-- поле JWT -->
   <textarea 
     id="jwt-input" 
     placeholder="Вставь sessionJWT сюда..."
-    style="width: 600px; height: 150px;"
   ></textarea>
+
+  <br>
+
+  <button onclick="initPayment()">Init Payment</button>
+  <button onclick="clearAll()">Очистить</button>
+
+  <!-- ✅ кнопка -->
+  <div id="payment-selection"></div>
+
+  <!-- ✅ форма -->
+  <div id="payment-screen"></div>
+
 </div>
-
-<br>
-
-<!-- ✅ кнопки -->
-<button onclick="initPayment()">Init Payment</button>
-<button onclick="clearAll()">Очистить</button>
-
-<hr>
-
-<!-- сюда рендерится checkout -->
-<div id="payment-container"></div>
 
 <script>
 
+let currentCheckout = null;
+let currentClient = null;
+
 async function initPayment() {
   try {
-    // ✅ берем JWT из поля
+
     const sessionJWT = document.getElementById('jwt-input').value.trim();
 
     if (!sessionJWT) {
@@ -43,21 +90,24 @@ async function initPayment() {
       return;
     }
 
-    // очищаем контейнер перед новым запуском
-    document.getElementById('payment-container').innerHTML = "";
+    // очистка
+    clearCheckout();
 
     // ✅ создаём клиент
-    const client = await VAS.UnifiedCheckout(sessionJWT);
+    currentClient = await VAS.UnifiedCheckout(sessionJWT);
 
-    // ✅ autoProcessing как у тебя
-    const checkout = await client.createCheckout({
+    // ✅ создаём checkout
+    currentCheckout = await currentClient.createCheckout({
       autoProcessing: true
     });
 
-    // ✅ mount
-    await checkout.mount('#payment-container');
+    // ✅ ВАЖНО: embedded mode (НЕ sidebar)
+    const result = await currentCheckout.mount({
+      paymentSelection: '#payment-selection',
+      paymentScreen: '#payment-screen'
+    });
 
-    console.log("Checkout initialized");
+    console.log("Payment result:", result);
 
   } catch (err) {
     console.error("Ошибка:", err);
@@ -65,14 +115,24 @@ async function initPayment() {
   }
 }
 
-function clearAll() {
-  // очищаем JWT
-  document.getElementById('jwt-input').value = "";
-  
-  // очищаем UI
-  document.getElementById('payment-container').innerHTML = "";
+function clearCheckout() {
+  document.getElementById('payment-selection').innerHTML = "";
+  document.getElementById('payment-screen').innerHTML = "";
 
-  console.log("Cleared");
+  if (currentCheckout) {
+    currentCheckout.destroy();
+    currentCheckout = null;
+  }
+
+  if (currentClient) {
+    currentClient.destroy();
+    currentClient = null;
+  }
+}
+
+function clearAll() {
+  document.getElementById('jwt-input').value = "";
+  clearCheckout();
 }
 
 </script>
